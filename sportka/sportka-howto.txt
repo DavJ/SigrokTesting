@@ -1,0 +1,6 @@
+jdi na stranku
+https://www.sazka.cz/loterie/sportka/statistiky
+
+klikni Historie losovanych cisel/kompletni historie tazenych cisel 
+
+uloz csv
