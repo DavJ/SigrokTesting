@@ -1,6 +1,7 @@
-jdi na stranku
-https://www.sazka.cz/loterie/sportka/statistiky
+1. jdi na stranku https://www.sazka.cz/loterie/sportka/statistiky
 
-klikni Historie losovanych cisel/kompletni historie tazenych cisel 
+2. klikni na odkaz Historie losovanych cisel/kompletni historie tazenych cisel 
 
-uloz csv
+3. uloz csv jako sportka.csv
+
+4. spust learn.py

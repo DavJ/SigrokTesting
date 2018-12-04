@@ -24,7 +24,7 @@ class draw(object):
             self.week = int(row[2])
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
-            self.second = [int(x) for x in row[12:17]]
+            self.second = [int(x) for x in row[11:18]]
             print('>OK')
         except:
             print('>ERROR')
