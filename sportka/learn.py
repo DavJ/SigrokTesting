@@ -20,7 +20,7 @@ class draw(object):
     def __init__(self, row):
         try:
             print(row)
-            self.date = datetime.strptime(row[0],'%d. %m. %Y')
+            self.date = datetime.strptime(row[0],'%d. %m. %Y').date()
             self.week = int(row[2])
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
