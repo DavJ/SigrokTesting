@@ -38,8 +38,8 @@ class draw(object):
 
     @property
     def y_train(self):
-        probability_first = np.array([1.0 if  number in self.first else 0 for number in range(1, 49)])
-        probability_second = np.array([1.0 if  number in self.first else 0 for number in range(1, 49)])
+        probability_first = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
+        probability_second = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
         return 0.5*(probability_first + probability_second)
 
 def date_to_x(date):
@@ -73,7 +73,7 @@ def learn_tutorial():
 def learn_and_predict_sportka(x_train, y_train, x_predict):
 
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape=(7)),
+        tf.keras.layers.Flatten(input_shape=(4,)),
         tf.keras.layers.Dense(512, activation=tf.nn.relu),
         tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(49, activation=tf.nn.softmax)
@@ -97,8 +97,8 @@ x_predict = date_to_x(datetime.strptime(DATE_PREDICT,'%d.%m.%Y').date())
 dh=draw_history()
 print(dh)
 
-x_train = [draw.x_train  for draw in dh.draws]
-y_train = [draw.y_train  for draw in dh.draws]
+x_train = np.array([draw.x_train  for draw in dh.draws])
+y_train = np.array([draw.y_train  for draw in dh.draws])
 
 y_predict = learn_and_predict_sportka(x_train, y_train, x_predict)
 
