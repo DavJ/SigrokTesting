@@ -1,7 +1,10 @@
 import csv
 from datetime import date, datetime
 import tensorflow as tf
+
 import numpy as np
+#import keras
+#from keras.utils.vis_utils import plot_model
 
 class draw_history(object):
     
@@ -73,26 +76,56 @@ def learn_tutorial():
 def learn_and_predict_sportka(x_train, y_train, x_predict):
 
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape=(4,)),
-        tf.keras.layers.Dense(512, activation=tf.nn.relu),
-        tf.keras.layers.Dropout(0.2),
+        #tf.keras.layers.Flatten(input_shape=(4,)),
+        tf.keras.layers.Dense(512, input_shape=(4,), activation=tf.nn.relu),
+        #tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(49, activation=tf.nn.softmax)
     ])
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
+    #tf.keras.utils.plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 
-    model.fit(x_train, y_train, epochs=5)
+    #labels = tf.keras.utils.to_categorical(y_train, num_classes=49)
+    model.fit(x=x_train, y=y_train, epochs=10)
     #model.evaluate(x_test, y_test)
 
     return model.predict(x_predict)
+
+
+def learn_and_predict_sportka2(x_train, y_train, x_predict):
+
+    inputs = tf.keras.Input(shape=(4,))  # Returns a placeholder tensor
+
+    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
+
+    x = tf.keras.layers.Dense(256, activation='relu')(x)
+
+    predictions = tf.keras.layers.Dense(49, activation='softmax')(x)
+
+    model = tf.keras.Model(inputs=inputs, outputs=predictions)
+
+    # The compile step specifies the training configuration.
+    model.compile(optimizer=tf.train.RMSPropOptimizer(0.001),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    model.fit(x=x_train, y=y_train, epochs=10)
+
+    return model.predict(x_predict)
+
+
+def best_numbers(y_predict, n=6):
+    numbers_vs_chances = ((i+1, y_predict[0][i]) for i in range(49))
+    sorted_numbers = sorted(numbers_vs_chances, key=lambda x: x[1], reverse=True)
+    return [key for key in sorted_numbers[0: n]]
 
 ########################################################################################################################
 ############################## main program ############################################################################
 ########################################################################################################################
 
 DATE_PREDICT = '12.5.2019'
-x_predict = date_to_x(datetime.strptime(DATE_PREDICT,'%d.%m.%Y').date())
+x_predict = np.array([date_to_x(datetime.strptime(DATE_PREDICT,'%d.%m.%Y').date())])
 
 dh=draw_history()
 print(dh)
@@ -100,8 +133,7 @@ print(dh)
 x_train = np.array([draw.x_train  for draw in dh.draws])
 y_train = np.array([draw.y_train  for draw in dh.draws])
 
-y_predict = learn_and_predict_sportka(x_train, y_train, x_predict)
-
+y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict)
 
 print(y_predict)
-pass
+print('best numbers for {}: {}'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
