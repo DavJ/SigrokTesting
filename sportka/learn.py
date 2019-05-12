@@ -110,7 +110,7 @@ def learn_and_predict_sportka2(x_train, y_train, x_predict):
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(x=x_train, y=y_train, epochs=10)
+    model.fit(x=x_train, y=y_train, epochs=10000)
 
     return model.predict(x_predict)
 
@@ -136,4 +136,7 @@ y_train = np.array([draw.y_train  for draw in dh.draws])
 y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict)
 
 print(y_predict)
-print('best numbers for {}: {}'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
+print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
+
+
+print('all numbers\n: {}\n\n'.format( best_numbers(y_predict, 49)))
