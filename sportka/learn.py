@@ -1,6 +1,7 @@
 import csv
 from datetime import date, datetime
 import tensorflow as tf
+import ephem
 
 import numpy as np
 #import keras
@@ -31,6 +32,9 @@ class draw(object):
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
             self.second = [int(x) for x in row[11:18]]
+
+
+
             print('>OK')
         except:
             print('>ERROR')
@@ -46,11 +50,18 @@ class draw(object):
         return 0.5*(probability_first + probability_second)
 
 def date_to_x(date):
+
+    #consider also some astrological data
+    previous_new_moon = ephem.previous_new_moon(date)
+    next_new_moon = ephem.next_new_moon(date)
+    relative_lunation = (ephem.Date(date) - previous_new_moon) / (next_new_moon - previous_new_moon)
+
     return np.array([
         date.day / 31.0,
         date.month / 12.0,
         date.year / 2019.0,
-        date.weekday() / 6.0
+        date.weekday() / 6.0,
+        relative_lunation
     ])
 
 def learn_tutorial():
@@ -77,7 +88,7 @@ def learn_and_predict_sportka(x_train, y_train, x_predict):
 
     model = tf.keras.models.Sequential([
         #tf.keras.layers.Flatten(input_shape=(4,)),
-        tf.keras.layers.Dense(512, input_shape=(4,), activation=tf.nn.relu),
+        tf.keras.layers.Dense(512, input_shape=(5,), activation=tf.nn.relu),
         #tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(49, activation=tf.nn.softmax)
     ])
@@ -95,7 +106,7 @@ def learn_and_predict_sportka(x_train, y_train, x_predict):
 
 def learn_and_predict_sportka2(x_train, y_train, x_predict):
 
-    inputs = tf.keras.Input(shape=(4,))  # Returns a placeholder tensor
+    inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
 
     x = tf.keras.layers.Dense(512, activation='relu')(inputs)
 
@@ -110,7 +121,7 @@ def learn_and_predict_sportka2(x_train, y_train, x_predict):
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(x=x_train, y=y_train, epochs=10000)
+    model.fit(x=x_train, y=y_train, epochs=1000)
 
     return model.predict(x_predict)
 
