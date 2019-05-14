@@ -7,6 +7,17 @@ import numpy as np
 #import keras
 #from keras.utils.vis_utils import plot_model
 
+
+sazka_building = ephem.Observer()
+
+class sazka_building(ephem.Observer()):
+    def __init__(date):
+        super.__init__()
+        self.lon = '14.4963524'
+        self.lat = '50.0986794'
+        self.elevation = 234
+        self.date = date
+
 class draw_history(object):
     
     draws = []
@@ -27,11 +38,12 @@ class draw(object):
     def __init__(self, row):
         try:
             print(row)
-            self.date = datetime.strptime(row[0],'%d. %m. %Y').date()
+            self.date = datetime.strptime(row[0] + '20:00', '%d. %m. %Y %h:%m').date()
             self.week = int(row[2])
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
             self.second = [int(x) for x in row[11:18]]
+            self.observer = sazka_building(self.date)
 
 
 
@@ -48,6 +60,10 @@ class draw(object):
         probability_first = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
         probability_second = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
         return 0.5*(probability_first + probability_second)
+
+    @property
+    def observer(self):
+        return sazka_building
 
 def date_to_x(date):
 
