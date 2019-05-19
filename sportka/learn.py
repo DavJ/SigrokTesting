@@ -45,7 +45,7 @@ class draw(object):
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
             self.second = [int(x) for x in row[11:18]]
-            self.observer = sazka_building(self.date)
+            #self.observer = sazka_building(self.date)
 
 
 
@@ -184,8 +184,8 @@ def best_numbers(y_predict, n=6):
     return [key for key in sorted_numbers[0: n]]
 
 def best_pairs(y_predict_pairs, n=30):
-    pairs_vs_chances = ((i+1, j+1, y_predict_pairs[i][j]) for i in range(49) for j in range(49))
-    sorted_pairs = sorted(pairs_vs_chances, key=lambda x: x[1], reverse=True)
+    pairs_vs_chances = [(i+1, j+1, y_predict_pairs[0][i+j*49]) for i in range(49) for j in range(49)]
+    sorted_pairs = sorted(pairs_vs_chances, key=lambda x: x[2], reverse=True)
     return [key for key in sorted_pairs[0: n]]
 
 ########################################################################################################################
@@ -203,14 +203,13 @@ y_train = np.array([draw.y_train  for draw in dh.draws])
 y_train_pairs = np.array([draw.y_train_pairs for draw in dh.draws])
 
 #y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict, depth=10, epochs=10000)
-y_predict_pairs = learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=10, epochs=10)
-
+y_predict_pairs = learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=10, epochs=1)
 
 #print(y_predict)
 #print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
 #print('all numbers\n: {}\n\n'.format( best_numbers(y_predict, 49)))
 
-print('best pairs for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_pairs, 30)))
+print('best pairs for {}\n: {}\n\n'.format(DATE_PREDICT, best_pairs(y_predict_pairs, 5)))
 print('all pairs\n: {}\n\n'.format(best_pairs(y_predict_pairs, 49*49)))
 
 
