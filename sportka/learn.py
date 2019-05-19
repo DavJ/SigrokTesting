@@ -8,15 +8,17 @@ import numpy as np
 #from keras.utils.vis_utils import plot_model
 
 
-sazka_building = ephem.Observer()
+#sazka_building = ephem.Observer()
 
-class sazka_building(ephem.Observer()):
-    def __init__(date):
+class sazka_building(ephem.Observer):
+
+    def __init__(self, date):
         super.__init__()
         self.lon = '14.4963524'
         self.lat = '50.0986794'
         self.elevation = 234
         self.date = date
+
 
 class draw_history(object):
     
@@ -38,7 +40,7 @@ class draw(object):
     def __init__(self, row):
         try:
             print(row)
-            self.date = datetime.strptime(row[0] + '20:00', '%d. %m. %Y %h:%m').date()
+            self.date = datetime.strptime(row[0] , '%d. %m. %Y').date()
             self.week = int(row[2])
             self.week_day = int(row[3])
             self.first = [int(x) for x in row[4:11]]
@@ -58,8 +60,18 @@ class draw(object):
     @property
     def y_train(self):
         probability_first = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
-        probability_second = np.array([1.0 if  number in self.first else 0 for number in range(1, 50)])
+        probability_second = np.array([1.0 if  number in self.second else 0 for number in range(1, 50)])
         return 0.5*(probability_first + probability_second)
+
+    @property
+    def y_train_pairs(self):
+        probability_first = np.array([
+        0 if i == j else 0.5 if (i in self.first and j in self.first) else 0
+        for i in range(1, 50) for j in range (1,50)])
+        probability_second = np.array([
+        0 if i == j else 0.5 if (i in self.second and j in self.second) else 0
+        for i in range(1, 50) for j in range (1,50)])
+        return probability_first + probability_second
 
     @property
     def observer(self):
@@ -104,9 +116,7 @@ def learn_and_predict_sportka(x_train, y_train, x_predict):
 
     model = tf.keras.models.Sequential([
         #tf.keras.layers.Flatten(input_shape=(4,)),
-        tf.keras.layers.Dense(512, input_shape=(5,), activation=tf.nn.relu),
-        #tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.Dense(49, activation=tf.nn.softmax)
+        tf.keras.layers.Dense(512, input_shape=(5,), activation=tf.nn.relu)
     ])
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
@@ -120,13 +130,15 @@ def learn_and_predict_sportka(x_train, y_train, x_predict):
     return model.predict(x_predict)
 
 
-def learn_and_predict_sportka2(x_train, y_train, x_predict):
+def learn_and_predict_sportka2(x_train, y_train, x_predict, depth=1, epochs=10):
 
     inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
 
     x = tf.keras.layers.Dense(512, activation='relu')(inputs)
 
-    x = tf.keras.layers.Dense(256, activation='relu')(x)
+    for i in range (1, depth):
+        x = tf.keras.layers.Dense(512, activation='relu')(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
 
     predictions = tf.keras.layers.Dense(49, activation='softmax')(x)
 
@@ -137,7 +149,31 @@ def learn_and_predict_sportka2(x_train, y_train, x_predict):
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(x=x_train, y=y_train, epochs=1000)
+    model.fit(x=x_train, y=y_train, epochs=epochs)
+
+    return model.predict(x_predict)
+
+
+def learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=1, epochs=10):
+
+    inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
+
+    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
+
+    for i in range (1, depth):
+        x = tf.keras.layers.Dense(512, activation='relu')(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
+
+    predictions = tf.keras.layers.Dense(2401, activation='softmax')(x)
+
+    model = tf.keras.Model(inputs=inputs, outputs=predictions)
+
+    # The compile step specifies the training configuration.
+    model.compile(optimizer=tf.train.RMSPropOptimizer(0.001),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    model.fit(x=x_train, y=y_train_pairs, epochs=epochs)
 
     return model.predict(x_predict)
 
@@ -147,11 +183,16 @@ def best_numbers(y_predict, n=6):
     sorted_numbers = sorted(numbers_vs_chances, key=lambda x: x[1], reverse=True)
     return [key for key in sorted_numbers[0: n]]
 
+def best_pairs(y_predict_pairs, n=30):
+    pairs_vs_chances = ((i+1, j+1, y_predict_pairs[i][j]) for i in range(49) for j in range(49))
+    sorted_pairs = sorted(pairs_vs_chances, key=lambda x: x[1], reverse=True)
+    return [key for key in sorted_pairs[0: n]]
+
 ########################################################################################################################
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '12.5.2019'
+DATE_PREDICT = '19.5.2019'
 x_predict = np.array([date_to_x(datetime.strptime(DATE_PREDICT,'%d.%m.%Y').date())])
 
 dh=draw_history()
@@ -159,11 +200,18 @@ print(dh)
 
 x_train = np.array([draw.x_train  for draw in dh.draws])
 y_train = np.array([draw.y_train  for draw in dh.draws])
+y_train_pairs = np.array([draw.y_train_pairs for draw in dh.draws])
 
-y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict)
-
-print(y_predict)
-print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
+#y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict, depth=10, epochs=10000)
+y_predict_pairs = learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=10, epochs=10)
 
 
-print('all numbers\n: {}\n\n'.format( best_numbers(y_predict, 49)))
+#print(y_predict)
+#print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict, 6)))
+#print('all numbers\n: {}\n\n'.format( best_numbers(y_predict, 49)))
+
+print('best pairs for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_pairs, 30)))
+print('all pairs\n: {}\n\n'.format(best_pairs(y_predict_pairs, 49*49)))
+
+
+
