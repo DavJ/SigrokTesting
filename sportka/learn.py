@@ -167,7 +167,7 @@ y_train = np.array([draw.y_train  for draw in dh.draws])
 y_train_pairs = np.array([draw.y_train_pairs for draw in dh.draws])
 y_train_all = np.array([np.concatenate((draw.y_train, draw.y_train_pairs), axis=0) for draw in dh.draws])
 
-y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict_all, depth=12, epochs=50000)
+y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict_all, depth=12, epochs=10000)
 y_predict_numbers = y_predict_all[:49]
 
 print(y_predict_numbers)
