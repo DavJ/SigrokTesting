@@ -4,11 +4,6 @@ import tensorflow as tf
 import ephem
 
 import numpy as np
-#import keras
-#from keras.utils.vis_utils import plot_model
-
-
-#sazka_building = ephem.Observer()
 
 class sazka_building(ephem.Observer):
 
@@ -34,7 +29,6 @@ class draw_history(object):
 
                 is_header=False
 
-                
 class draw(object):
     
     def __init__(self, row, draw_history):
@@ -121,96 +115,6 @@ def learn_tutorial():
     model.fit(x_train, y_train, epochs=5)
     model.evaluate(x_test, y_test)
 
-def learn_and_predict_sportka(x_train, y_train, x_predict):
-
-    model = tf.keras.models.Sequential([
-        #tf.keras.layers.Flatten(input_shape=(4,)),
-        tf.keras.layers.Dense(512, input_shape=(5,), activation=tf.nn.relu)
-    ])
-    model.compile(optimizer='adam',
-                  loss='sparse_categorical_crossentropy',
-                  metrics=['accuracy'])
-    #tf.keras.utils.plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
-
-    #labels = tf.keras.utils.to_categorical(y_train, num_classes=49)
-    model.fit(x=x_train, y=y_train, epochs=10)
-    #model.evaluate(x_test, y_test)
-
-    return model.predict(x_predict)
-
-
-def learn_and_predict_sportka2(x_train, y_train, x_predict, depth=1, epochs=10):
-
-    inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
-
-    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
-
-    for i in range (1, depth):
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
-        x = tf.keras.layers.Dropout(0.2)(x)
-
-    predictions = tf.keras.layers.Dense(49, activation='softmax')(x)
-
-    model = tf.keras.Model(inputs=inputs, outputs=predictions)
-
-    # The compile step specifies the training configuration.
-    model.compile(optimizer=tf.train.RMSPropOptimizer(0.001),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-
-    model.fit(x=x_train, y=y_train, epochs=epochs)
-
-    return model.predict(x_predict)
-
-
-def learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=1, epochs=10):
-
-    inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
-
-    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
-
-    for i in range (1, depth):
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
-        x = tf.keras.layers.Dropout(0.2)(x)
-
-    predictions = tf.keras.layers.Dense(2401, activation='softmax')(x)
-
-    model = tf.keras.Model(inputs=inputs, outputs=predictions)
-
-    # The compile step specifies the training configuration.
-    model.compile(optimizer=tf.train.AdamOptimizer(0.001),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-
-    model.fit(x=x_train, y=y_train_pairs, epochs=epochs)
-
-    return model.predict(x_predict)
-
-
-def learn_and_predict_sportka4(x_train, y_train_both, x_predict, depth=1, epochs=10):
-
-    inputs = tf.keras.Input(shape=(5,))  # Returns a placeholder tensor
-
-    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
-
-    for i in range (1, depth):
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
-        x = tf.keras.layers.Dropout(0.2)(x)
-
-    predictions = tf.keras.layers.Dense(2450, activation='softmax')(x)
-
-    model = tf.keras.Model(inputs=inputs, outputs=predictions)
-
-    # The compile step specifies the training configuration.
-    model.compile(optimizer=tf.train.AdamOptimizer(0.001),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-
-    model.fit(x=x_train, y=y_train_both, epochs=epochs)
-
-    return model.predict(x_predict)
-
-
 def learn_and_predict_sportka5(x_train, y_train_both, x_predict, depth=1, epochs=10):
 
     inputs = tf.keras.Input(shape=(54,))  # Returns a placeholder tensor
@@ -234,8 +138,6 @@ def learn_and_predict_sportka5(x_train, y_train_both, x_predict, depth=1, epochs
 
     return model.predict(x_predict)
 
-
-
 def best_numbers(y_predict, n=6):
     numbers_vs_chances = ((i+1, y_predict[0][i]) for i in range(49))
     sorted_numbers = sorted(numbers_vs_chances, key=lambda x: x[1], reverse=True)
@@ -257,29 +159,17 @@ print(dh)
 
 x_predict = np.array([date_to_x(datetime.strptime(DATE_PREDICT,'%d.%m.%Y').date())])
 x_predict_draw = np.array([dh.draws[-1].y_train])
-x_predict_all = np.array([np.concatenate((x_predict, x_predict_draw), axis=1)])
+x_predict_all = [np.concatenate((x_predict, x_predict_draw), axis=1)]
 
-#x_train = np.array([draw.x_train  for draw in dh.draws])
-#x_train_history = np.array([draw.x_train_history for draw in dh.draws])
 x_train_all = np.array([np.concatenate((draw.x_train, draw.x_train_history), axis=0) for draw in dh.draws])
-
 
 y_train = np.array([draw.y_train  for draw in dh.draws])
 y_train_pairs = np.array([draw.y_train_pairs for draw in dh.draws])
 y_train_all = np.array([np.concatenate((draw.y_train, draw.y_train_pairs), axis=0) for draw in dh.draws])
 
-
-#y_predict = learn_and_predict_sportka2(x_train, y_train, x_predict, depth=10, epochs=100000)
-#y_predict_pairs = learn_and_predict_sportka3(x_train, y_train_pairs, x_predict, depth=10, epochs=1000)
-y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict, depth=12, epochs=10)
+y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict_all, depth=12, epochs=50000)
 y_predict_numbers = y_predict_all[:49]
 
 print(y_predict_numbers)
 print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers, 6)))
 print('all numbers\n: {}\n\n'.format( best_numbers(y_predict_numbers, 49)))
-
-#print('best pairs for {}\n: {}\n\n'.format(DATE_PREDICT, best_pairs(y_predict_pairs, 5)))
-#print('all pairs\n: {}\n\n'.format(best_pairs(y_predict_pairs, 49*49)))
-
-
-
