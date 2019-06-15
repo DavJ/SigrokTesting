@@ -115,24 +115,52 @@ def learn_tutorial():
     model.fit(x_train, y_train, epochs=5)
     model.evaluate(x_test, y_test)
 
-def learn_and_predict_sportka5(x_train, y_train_both, x_predict, depth=1, epochs=10):
+def learn_and_predict_sportka5(x_train, y_train_both, x_predict, depth=1, depth_wide=2, epochs=15):
 
     inputs = tf.keras.Input(shape=(54,))  # Returns a placeholder tensor
 
-    x = tf.keras.layers.Dense(512, activation='relu')(inputs)
+    x = tf.keras.layers.Dense(128, activation='relu')(inputs)
+
+    for i in range (1, depth-depth_wide):
+        x = tf.keras.layers.Dense(128, activation='relu')(x)
+        x = tf.keras.layers.Dropout(0.4)(x)
+
+    for i in range (1, depth_wide):
+        x = tf.keras.layers.Dense(2450, activation='relu')(x)
+        x = tf.keras.layers.Dropout(0.4)(x)
+
+    predictions = tf.keras.layers.Dense(2450, activation='linear')(x)
+
+    model = tf.keras.Model(inputs=inputs, outputs=predictions)
+
+    # The compile step specifies the training configuration.
+    model.compile(optimizer=tf.train.AdamOptimizer(0.0005),
+                  loss='mse',
+                  metrics=['cosine_proximity', 'msle', 'mean_squared_error'])
+
+    model.fit(x=x_train, y=y_train_both, epochs=epochs)
+
+    return model.predict(x_predict)
+
+
+def learn_and_predict_sportka6(x_train, y_train_both, x_predict, depth=1, epochs=10):
+
+    inputs = tf.keras.Input(shape=(54,))  # Returns a placeholder tensor
+
+    x = tf.keras.layers.Dense(256, activation='relu')(inputs)
 
     for i in range (1, depth):
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
+        x = tf.keras.layers.Dense(256, activation='relu')(x)
         x = tf.keras.layers.Dropout(0.2)(x)
 
-    predictions = tf.keras.layers.Dense(2450, activation='softmax')(x)
+    predictions = tf.keras.layers.Dense(49, activation='linear')(x)
 
     model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
     # The compile step specifies the training configuration.
     model.compile(optimizer=tf.train.AdamOptimizer(0.001),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+                  loss='mse',
+                  metrics=['mean_squared_error', 'cosine_proximity'])
 
     model.fit(x=x_train, y=y_train_both, epochs=epochs)
 
@@ -166,8 +194,9 @@ x_train_all = np.array([np.concatenate((draw.x_train, draw.x_train_history), axi
 y_train = np.array([draw.y_train  for draw in dh.draws])
 y_train_pairs = np.array([draw.y_train_pairs for draw in dh.draws])
 y_train_all = np.array([np.concatenate((draw.y_train, draw.y_train_pairs), axis=0) for draw in dh.draws])
+#y_train_all = np.array([draw.y_train for draw in dh.draws])
 
-y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict_all, depth=12, epochs=10000)
+y_predict_all = learn_and_predict_sportka5(x_train_all, y_train_all, x_predict_all, depth=128, epochs=20)
 y_predict_numbers = y_predict_all[:49]
 
 print(y_predict_numbers)
