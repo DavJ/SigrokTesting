@@ -175,16 +175,16 @@ y_train_pairs_2 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
 y_train_all_1 = np.array([np.concatenate((draw.y_train_1, draw.y_train_pairs_1), axis=0) for draw in dh.draws])
 y_train_all_2 = np.array([np.concatenate((draw.y_train_2, draw.y_train_pairs_2), axis=0) for draw in dh.draws])
 
-y_predict_all_1 = learn_and_predict_sportka(x_train_all, y_train_all_1, x_predict_all, depth=128, epochs=5)
+y_predict_all_1 = learn_and_predict_sportka(x_train_all, y_train_all_1, x_predict_all, depth=128, epochs=50)
 y_predict_numbers_1 = y_predict_all_1[:49]
 
-y_predict_all_2 = learn_and_predict_sportka(x_train_all, y_train_all_2, x_predict_all, depth=128, epochs=5)
+y_predict_all_2 = learn_and_predict_sportka(x_train_all, y_train_all_2, x_predict_all, depth=128, epochs=50)
 y_predict_numbers_2 = y_predict_all_2[:49]
 
-print(y_predict_numbers_1)
+print('first draw {y_predict_numbers_1}'.format(y_predict_numbers_1))
 print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers_1, 6)))
 print('all numbers\n: {}\n\n'.format( best_numbers(y_predict_numbers_1, 49)))
 
-print(y_predict_numbers_2)
+print('second draw {y_predict_numbers_2}'.format(y_predict_numbers_2))
 print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers_2, 6)))
 print('all numbers\n: {}\n\n'.format( best_numbers(y_predict_numbers_2, 49)))
