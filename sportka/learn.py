@@ -7,6 +7,7 @@ import numpy as np
 
 
 class sazka_building(ephem.Observer):
+
     def __init__(self, date):
         super.__init__()
         self.lon = '14.4963524'
@@ -31,6 +32,7 @@ class draw_history(object):
 
 
 class draw(object):
+
     def __init__(self, row, draw_history):
         try:
             print(row)
@@ -63,7 +65,8 @@ class draw(object):
     @property
     def y_train_pairs_1(self):
         probability_first = np.array([
-            0 if i == j else 1 if (i in self.first and j in self.first) else 0 for i in range(1, 50)
+            0 if i == j else 1 if (i in self.first and j in self.first) else 0
+            for i in range(1, 50)
             for j in range(1, 50)
         ])
         return probability_first
@@ -71,7 +74,8 @@ class draw(object):
     @property
     def y_train_pairs_2(self):
         probability_second = np.array([
-            0 if i == j else 1 if (i in self.second and j in self.second) else 0 for i in range(1, 50)
+            0 if i == j else 1 if (i in self.second and j in self.second) else 0
+            for i in range(1, 50)
             for j in range(1, 50)
         ])
         return probability_second
@@ -113,7 +117,7 @@ def date_to_x(date):
 
 def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=1, depth_wide=2, epochs=15):
 
-    inputs = tf.keras.Input(shape=(103, ))  # Returns a placeholder tensor
+    inputs = tf.keras.Input(shape=(103,))  # Returns a placeholder tensor
 
     x = tf.keras.layers.Dense(128, activation='relu')(inputs)
 
@@ -152,7 +156,7 @@ def best_pairs(y_predict_pairs, n=30):
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '23.6.2019'
+DATE_PREDICT = '21.7.2019'
 
 dh = draw_history()
 print(dh)
@@ -168,7 +172,7 @@ x_train_all = np.array(
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
 y_train_pairs_1 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
-y_train_pairs_2 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
+y_train_pairs_2 = np.array([draw.y_train_pairs_2 for draw in dh.draws])
 y_train_all_1 = np.array([np.concatenate((draw.y_train_1, draw.y_train_pairs_1), axis=0) for draw in dh.draws])
 y_train_all_2 = np.array([np.concatenate((draw.y_train_2, draw.y_train_pairs_2), axis=0) for draw in dh.draws])
 
