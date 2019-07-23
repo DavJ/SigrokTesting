@@ -126,10 +126,12 @@ def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=1, depth_w
         x = tf.keras.layers.Dropout(0.4)(x)
 
     for i in range(1, depth_wide):
-        x = tf.keras.layers.Dense(2450, activation='relu')(x)
+        #x = tf.keras.layers.Dense(2450, activation='relu')(x)
+        x = tf.keras.layers.Dense(49, activation='relu')(x)
         x = tf.keras.layers.Dropout(0.4)(x)
 
-    predictions = tf.keras.layers.Dense(2450, activation='linear')(x)
+    #predictions = tf.keras.layers.Dense(2450, activation='linear')(x)
+    predictions = tf.keras.layers.Dense(49, activation='linear')(x)
 
     model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
@@ -171,16 +173,21 @@ x_train_all = np.array(
 
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
-y_train_pairs_1 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
-y_train_pairs_2 = np.array([draw.y_train_pairs_2 for draw in dh.draws])
-y_train_all_1 = np.array([np.concatenate((draw.y_train_1, draw.y_train_pairs_1), axis=0) for draw in dh.draws])
-y_train_all_2 = np.array([np.concatenate((draw.y_train_2, draw.y_train_pairs_2), axis=0) for draw in dh.draws])
+#y_train_pairs_1 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
+#y_train_pairs_2 = np.array([draw.y_train_pairs_2 for draw in dh.draws])
+#y_train_all_1 = np.array([np.concatenate((draw.y_train_1, draw.y_train_pairs_1), axis=0) for draw in dh.draws])
+#y_train_all_2 = np.array([np.concatenate((draw.y_train_2, draw.y_train_pairs_2), axis=0) for draw in dh.draws])
 
-y_predict_all_1 = learn_and_predict_sportka(x_train_all, y_train_all_1, x_predict_all, depth=128, epochs=10)
-y_predict_numbers_1 = y_predict_all_1[:49]
+#y_predict_all_1 = learn_and_predict_sportka(x_train_all, y_train_all_1, x_predict_all, depth=128, epochs=10)
+#y_predict_numbers_1 = y_predict_all_1[:49]
 
-y_predict_all_2 = learn_and_predict_sportka(x_train_all, y_train_all_2, x_predict_all, depth=128, epochs=10)
-y_predict_numbers_2 = y_predict_all_2[:49]
+#y_predict_all_2 = learn_and_predict_sportka(x_train_all, y_train_all_2, x_predict_all, depth=128, epochs=10)
+#y_predict_numbers_2 = y_predict_all_2[:49]
+
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=5)
+y_predict_numbers_1 = y_predict_1[:49]
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=5)
+y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')
 print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers_1, 6)))
