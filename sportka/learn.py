@@ -1,6 +1,7 @@
 import csv
 from datetime import date, datetime
 import tensorflow as tf
+
 import ephem
 
 import numpy as np
@@ -55,12 +56,12 @@ class draw(object):
     @property
     def y_train_1(self):
         probability_first = np.array([1.0 if number in self.first else 0 for number in range(1, 50)])
-        return probability_first
+        return probability_first / 7.0
 
     @property
     def y_train_2(self):
         probability_second = np.array([1.0 if number in self.second else 0 for number in range(1, 50)])
-        return probability_second
+        return probability_second / 7.0
 
     @property
     def y_train_pairs_1(self):
@@ -69,7 +70,7 @@ class draw(object):
             for i in range(1, 50)
             for j in range(1, 50)
         ])
-        return probability_first
+        return probability_first / 49.0
 
     @property
     def y_train_pairs_2(self):
@@ -78,7 +79,7 @@ class draw(object):
             for i in range(1, 50)
             for j in range(1, 50)
         ])
-        return probability_second
+        return probability_second / 49.0
 
     @property
     def x_train_history_1(self):
@@ -88,7 +89,7 @@ class draw(object):
         if history_index >= 0:
             return self.draw_history.draws[history_index].y_train_1
         else:
-            return np.array([0 for number in range(1, 50)])
+            return np.array([1/49.0 for number in range(1, 50)])
 
     @property
     def x_train_history_2(self):
@@ -98,7 +99,7 @@ class draw(object):
         if history_index >= 0:
             return self.draw_history.draws[history_index].y_train_2
         else:
-            return np.array([0 for number in range(1, 50)])
+            return np.array([1/49.0 for number in range(1, 50)])
 
     @property
     def observer(self):
@@ -115,19 +116,27 @@ def date_to_x(date):
     return np.array([date.day / 31.0, date.month / 12.0, date.year / 2019.0, date.weekday() / 6.0, relative_lunation])
 
 
-def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=1, depth_wide=2, epochs=15):
+def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=128, depth_wide=32, epochs=15):
 
     inputs = tf.keras.Input(shape=(103,))  # Returns a placeholder tensor
 
-    x = tf.keras.layers.Dense(128, activation='relu')(inputs)
+    x = tf.keras.layers.Dense(128, activation='sigmoid',
+                              kernel_initializer='random_normal',
+                              bias_initializer='random_normal')(inputs)
 
     for i in range(1, depth - depth_wide):
-        x = tf.keras.layers.Dense(128, activation='relu')(x)
+        x = tf.keras.layers.Dense(128, activation='sigmoid',
+                                  kernel_initializer='random_normal',
+                                  bias_initializer='random_normal'
+                                  )(x)
         x = tf.keras.layers.Dropout(0.4)(x)
 
     for i in range(1, depth_wide):
         #x = tf.keras.layers.Dense(2450, activation='relu')(x)
-        x = tf.keras.layers.Dense(49, activation='relu')(x)
+        x = tf.keras.layers.Dense(49, activation='sigmoid',
+                                  kernel_initializer='random_normal',
+                                  bias_initializer='random_normal'
+                                  )(x)
         x = tf.keras.layers.Dropout(0.4)(x)
 
     #predictions = tf.keras.layers.Dense(2450, activation='linear')(x)
@@ -158,7 +167,7 @@ def best_pairs(y_predict_pairs, n=30):
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '24.7.2019'
+DATE_PREDICT = '4.8.2019'
 
 dh = draw_history()
 print(dh)
@@ -173,20 +182,10 @@ x_train_all = np.array(
 
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
-#y_train_pairs_1 = np.array([draw.y_train_pairs_1 for draw in dh.draws])
-#y_train_pairs_2 = np.array([draw.y_train_pairs_2 for draw in dh.draws])
-#y_train_all_1 = np.array([np.concatenate((draw.y_train_1, draw.y_train_pairs_1), axis=0) for draw in dh.draws])
-#y_train_all_2 = np.array([np.concatenate((draw.y_train_2, draw.y_train_pairs_2), axis=0) for draw in dh.draws])
 
-#y_predict_all_1 = learn_and_predict_sportka(x_train_all, y_train_all_1, x_predict_all, depth=128, epochs=10)
-#y_predict_numbers_1 = y_predict_all_1[:49]
-
-#y_predict_all_2 = learn_and_predict_sportka(x_train_all, y_train_all_2, x_predict_all, depth=128, epochs=10)
-#y_predict_numbers_2 = y_predict_all_2[:49]
-
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=5000)
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=500)
 y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=5000)
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=500)
 y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')
