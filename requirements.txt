@@ -8,3 +8,4 @@ keras==2.2.4
 opencv-python==3.4.4.19
 scikit-image==0.14.1
 thriftpy2==0.4.0
+selenium==3.141.0
