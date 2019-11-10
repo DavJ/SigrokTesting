@@ -201,9 +201,9 @@ x_train_all = np.array(
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
 
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=5)
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=1000)
 y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=5)
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=1000)
 y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')
