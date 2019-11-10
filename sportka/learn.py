@@ -5,7 +5,7 @@ import tensorflow as tf
 import ephem
 
 import numpy as np
-
+from sportka.download import download_data_from_sazka
 
 class sazka_building(ephem.Observer):
 
@@ -22,7 +22,8 @@ class draw_history(object):
     draws = []
 
     def __init__(self):
-        with open('sportka.csv', newline='') as csvfile:
+        download_data_from_sazka()
+        with open('/tmp/sportka.csv', newline='') as csvfile:
             the_reader = csv.reader(csvfile, delimiter=';')
             is_header = True
             for row in the_reader:
@@ -145,7 +146,7 @@ def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=128, depth
     model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
     # The compile step specifies the training configuration.
-    model.compile(optimizer=tf.train.AdamOptimizer(0.0005), loss='mse', metrics=['msle', 'mean_squared_error'])
+    model.compile(optimizer='adam', loss='mse', metrics=['msle', 'mean_squared_error'])
 
     model.fit(x=x_train, y=y_train_both, epochs=epochs)
     return model.predict(x_predict)
@@ -167,7 +168,7 @@ def best_pairs(y_predict_pairs, n=30):
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '4.8.2019'
+DATE_PREDICT = '10.11.2019'
 
 dh = draw_history()
 print(dh)
