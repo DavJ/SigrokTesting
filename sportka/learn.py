@@ -1,11 +1,10 @@
 import csv
 from datetime import date, datetime
 import tensorflow as tf
-
 import ephem
-
 import numpy as np
 from sportka.download import download_data_from_sazka
+import random
 
 class sazka_building(ephem.Observer):
 
@@ -163,6 +162,24 @@ def best_pairs(y_predict_pairs, n=30):
     sorted_pairs = sorted(pairs_vs_chances, key=lambda x: x[2], reverse=True)
     return [key for key in sorted_pairs[0:n]]
 
+def recommended_numbers_for_ticket():
+    recommended_numbers = [
+        set(best_numbers(y_predict_numbers_1, 6)),
+        set(best_numbers(y_predict_numbers_2, 6)),
+        set(best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 6))
+    ]
+
+    considered_numbers = best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 10)
+    added = 0
+    while added <= 7:
+        sample = set(random.sample(considered_numbers, 6))
+        if sample not in recommended_numbers:
+            recommended_numbers.append(sample)
+            added += 1
+
+    return recommended_numbers
+
+
 
 ########################################################################################################################
 ############################## main program ############################################################################
@@ -184,9 +201,9 @@ x_train_all = np.array(
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
 
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=500)
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=5)
 y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=500)
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=5)
 y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')
@@ -200,3 +217,11 @@ print('all numbers\n: {}\n\n'.format(best_numbers(y_predict_numbers_2, 49)))
 print('combined :')
 print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 6)))
 print('all numbers\n: {}\n\n'.format(best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 49)))
+
+print('recommended numbers : \n:')
+for recommended_column in recommended_numbers_for_ticket():
+    print(recommended_column)
+
+
+
+
