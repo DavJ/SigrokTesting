@@ -6,6 +6,8 @@ import numpy as np
 from sportka.download import download_data_from_sazka
 import random
 
+REALIZATIONS = 10
+
 class sazka_building(ephem.Observer):
 
     def __init__(self, date):
@@ -14,7 +16,6 @@ class sazka_building(ephem.Observer):
         self.lat = '50.0986794'
         self.elevation = 234
         self.date = date
-
 
 class draw_history(object):
 
@@ -44,10 +45,15 @@ class draw(object):
             self.second = [int(x) for x in row[11:18]]
             self.draw_history = draw_history
             #self.observer = sazka_building(self.date)
+            self.noise = NOISE
 
             print('>OK')
         except:
             print('>ERROR')
+
+    @property
+    def noise(self, mean=0, deviation=0.5):
+         yield np.random.normal(mean, deviation, 49)
 
     @property
     def x_train(self):
@@ -86,8 +92,9 @@ class draw(object):
         difference = 1
         index = self.draw_history.draws.index(self)
         history_index = index - difference
+
         if history_index >= 0:
-            return self.draw_history.draws[history_index].y_train_1
+            return self.draw_history.draws[history_index].y_train_1 + next(self.noise)
         else:
             return np.array([1/49.0 for number in range(1, 50)])
 
@@ -97,7 +104,7 @@ class draw(object):
         index = self.draw_history.draws.index(self)
         history_index = index - difference
         if history_index >= 0:
-            return self.draw_history.draws[history_index].y_train_2
+            return self.draw_history.draws[history_index].y_train_2 + next(self.noise)
         else:
             return np.array([1/49.0 for number in range(1, 50)])
 
@@ -185,25 +192,28 @@ def recommended_numbers_for_ticket():
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '10.11.2019'
+DATE_PREDICT = '15.11.2019'
+
 
 dh = draw_history()
 print(dh)
+REALIZATIONS = range(10)
 
 x_predict = np.array([date_to_x(datetime.strptime(DATE_PREDICT, '%d.%m.%Y').date())])
 x_predict_draw_1 = np.array([dh.draws[-1].y_train_1])
 x_predict_draw_2 = np.array([dh.draws[-1].y_train_2])
 x_predict_all = [np.concatenate((x_predict, x_predict_draw_1, x_predict_draw_2), axis=1)]
 
-x_train_all = np.array(
-    [np.concatenate((draw.x_train, draw.x_train_history_1, draw.x_train_history_2), axis=0) for draw in dh.draws])
 
-y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
-y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
 
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=1000)
+x_train_all = np.array([np.concatenate((draw.x_train, draw.x_train_history_1, draw.x_train_history_2), axis=0) for draw in dh.draws for realization in REALIZATIONS])
+
+y_train_1 = np.array([draw.y_train_1 for draw in dh.draws for realization in REALIZATIONS])
+y_train_2 = np.array([draw.y_train_2 for draw in dh.draws for realization in REALIZATIONS])
+
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=100)
 y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=1000)
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=100)
 y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')
