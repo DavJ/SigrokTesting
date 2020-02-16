@@ -5,11 +5,12 @@ do not use probabilities but use directly numbers
 import csv
 from datetime import date, datetime
 import tensorflow as tf
-
 import ephem
 
 import numpy as np
 import math
+import random
+
 
 class sazka_building(ephem.Observer):
 
@@ -68,13 +69,13 @@ class draw(object):
         random_numbers = []
         for _  in range(7):
             while True:
-                rn = random(1, 49)
+                rn = math.ceil(49*random.random())
                 if rn not in random_numbers:
                     random_numbers.append(rn)
                     break
                 else:
                     continue
-        return np.array(self.random_numbers)
+        return np.array(random_numbers)
 
     @property
     def x_train_history_1(self):
@@ -84,7 +85,7 @@ class draw(object):
         if history_index >= 0:
             return self.draw_history.draws[history_index].y_train_1
         else:
-            return y_train_random
+            return self.y_train_random
 
     @property
     def x_train_history_2(self):
@@ -94,7 +95,7 @@ class draw(object):
         if history_index >= 0:
             return self.draw_history.draws[history_index].y_train_2
         else:
-            return y_train_random
+            return self.y_train_random
 
     @property
     def observer(self):
@@ -111,19 +112,29 @@ def date_to_x(date):
     return np.array([date.day / 31.0, date.month / 12.0, date.year / 2019.0, date.weekday() / 6.0, relative_lunation])
 
 def normalize(array):
-    return np.array([((x-1) % 48 + 1) for x in array])
+    return tf.map_fn(lambda x: x % 49 + 1, array)
 
-def loss_function(x_true, y_pred):
-    x_duplicite = sum([len([x for x in x_true if x == x_value]) for x_value in x_true])
-    y_duplicite = sum([len([y for y in y_pred if y == y_value]) for y_value in y_pred])
+def my_loss(x_true, y_pred):
+    # y_norm = normalize(y_pred)
+    y_norm = y_pred
+    x_duplicite = 0
+    y_duplicite = 0
+    #y_duplicite = len(y_norm) - len(numpy.unique(y_norm))
     duplicities = x_duplicite + y_duplicite
-    matching = sum([1 for y in y_pred if y in x_pred])
+    matcher = np.in1d(x_true, y_norm)
+    matching = sum([1 for m in matcher if m])
 
     f = math.factorial
-    n = len(x_true)
-    return math.sqr(f(n + duplicities) / f(matching) / f(n + duplicities-matching) + random.random() - 0.5)
+    n = 6
+    loss = math.pow(f(n + duplicities) / f(matching) / f(n + duplicities-matching) + random.random() - 0.5, 2)
 
-def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=128, epochs=15):
+    return tf.convert_to_tensor(loss, dtype=tf.float32)
+
+
+    #r eturn tf.keras.backend.mean(loss, axis=None, keepdims=False)
+
+
+def learn_and_predict_sportka(x_train, y_train, x_predict, depth=256, epochs=15):
 
     inputs = tf.keras.Input(shape=(19,))  # Returns a placeholder tensor
 
@@ -138,24 +149,22 @@ def learn_and_predict_sportka(x_train, y_train_both, x_predict, depth=128, epoch
                                   )(x)
         x = tf.keras.layers.Dropout(0.4)(x)
 
-    for i in range(1, depth_wide):
-        #x = tf.keras.layers.Dense(2450, activation='relu')(x)
+    for i in range(1):
         x = tf.keras.layers.Dense(6, activation='sigmoid',
                                   kernel_initializer='random_normal',
                                   bias_initializer='random_normal'
                                   )(x)
         x = tf.keras.layers.Dropout(0.4)(x)
 
-    predictions = normalize(tf.keras.layers.Dense(6, activation='linear')(x))
+    predictions = tf.keras.layers.Dense(14, activation='linear')(x)
 
     model = tf.keras.Model(inputs=inputs, outputs=predictions)
 
     # The compile step specifies the training configuration.
-    model.compile(optimizer=tf.train.AdamOptimizer(0.0005), loss='loss_function')
+    model.compile(optimizer=tf.train.AdamOptimizer(0.0005), loss='mse')
 
-    model.fit(x=x_train, y=y_train_both, epochs=epochs)
+    model.fit(x=x_train, y=y_train, epochs=epochs)
     return model.predict(x_predict)
-
 
 ########################################################################################################################
 ############################## main program ############################################################################
@@ -176,19 +185,10 @@ x_train_all = np.array(
 
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws])
+y_train_all = [np.concatenate((y_train_1, y_train_2), axis=1)]
 
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=500)
-y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=500)
-y_predict_numbers_2 = y_predict_2[:49]
+y_predict = learn_and_predict_sportka(x_train_all, y_train_all, x_predict_all, depth=128, epochs=500)
 
-print('first draw ')
-print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, y_predict_1))
+print('both draws ')
+print('14 best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, y_predict))
 
-print('second draw {}')
-print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, y_predict_2))
-
-
-#print('combined :')
-#print('best numbers for {}\n: {}\n\n'.format(DATE_PREDICT, best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 6)))
-#print('all numbers\n: {}\n\n'.format(best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 49)))

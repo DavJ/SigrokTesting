@@ -169,14 +169,14 @@ def best_pairs(y_predict_pairs, n=30):
     sorted_pairs = sorted(pairs_vs_chances, key=lambda x: x[2], reverse=True)
     return [key for key in sorted_pairs[0:n]]
 
-def recommended_numbers_for_ticket():
+def recommended_numbers_for_ticket(choose_from_best=12):
     recommended_numbers = [
         set(best_numbers(y_predict_numbers_1, 6)),
         set(best_numbers(y_predict_numbers_2, 6)),
         set(best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 6))
     ]
 
-    considered_numbers = best_numbers(y_predict_numbers_1 + y_predict_numbers_2, 10)
+    considered_numbers = best_numbers(y_predict_numbers_1 + y_predict_numbers_2, choose_from_best)
     added = 0
     while added <= 7:
         sample = set(random.sample(considered_numbers, 6))
@@ -192,12 +192,12 @@ def recommended_numbers_for_ticket():
 ############################## main program ############################################################################
 ########################################################################################################################
 
-DATE_PREDICT = '15.11.2019'
+DATE_PREDICT = '24.11.2019'
 
 
 dh = draw_history()
 print(dh)
-REALIZATIONS = range(10)
+REALIZATIONS = range(15)
 
 x_predict = np.array([date_to_x(datetime.strptime(DATE_PREDICT, '%d.%m.%Y').date())])
 x_predict_draw_1 = np.array([dh.draws[-1].y_train_1])
@@ -211,9 +211,9 @@ x_train_all = np.array([np.concatenate((draw.x_train, draw.x_train_history_1, dr
 y_train_1 = np.array([draw.y_train_1 for draw in dh.draws for realization in REALIZATIONS])
 y_train_2 = np.array([draw.y_train_2 for draw in dh.draws for realization in REALIZATIONS])
 
-y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=100)
+y_predict_1 = learn_and_predict_sportka(x_train_all, y_train_1, x_predict_all, depth=128, epochs=150)
 y_predict_numbers_1 = y_predict_1[:49]
-y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=100)
+y_predict_2 = learn_and_predict_sportka(x_train_all, y_train_2, x_predict_all, depth=128, epochs=150)
 y_predict_numbers_2 = y_predict_2[:49]
 
 print('first draw ')

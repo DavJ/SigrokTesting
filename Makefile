@@ -7,7 +7,9 @@ prepare-ubuntu:
 	sudo apt-get install python3-venv
 
 dev-init-ubuntu:
-	pip3 install --user virtualenv
+	#pip3 install --user virtualenv
 	virtualenv --python=/usr/bin/python3.6 python36	
 	source ./python36/bin/activate
 	sudo pip install --upgrade --ignore-installed  -r requirements.txt
+        sudo pip install lxml
+        sudo pip install yfinance 

@@ -11,3 +11,4 @@ opencv-python
 scikit-image
 thriftpy2
 selenium==3.141.0
+yahoo-finance
