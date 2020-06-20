@@ -58,11 +58,14 @@ class Hantek():
 
     def open(self):
         try:
-            self._process = subprocess.Popen(
-                self.sigrok_command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+            with open("/tmp/hantek.out", "wb") as out, open("/tmp/hantek.err", "wb") as err:
+                self._process = subprocess.Popen(
+                    self.sigrok_command,
+                    shell=True,
+                    stdout=out, #subprocess.PIPE,
+                    stderr=err, #subprocess.PIPE,
+                    stdin=None
+            )
             self._opened = True
         except Exception:
             self._opened = False
@@ -91,16 +94,18 @@ class Hantek():
                 shape=(self.number_of_channels, number_of_samples))
 
             counters = [0 for counter in range(self.number_of_channels)]
-            while any(counter < number_of_samples for counter in counters):
 
-                line = self._process.stdout.readline()
-                try:
-                    (channel, value) = parse_line(line)
-                    self.samples[channel, counters[channel]] = value
-                    counters[channel] += 1
+            with open("/tmp/hantek.out", "rb") as out:
+                while any(counter < number_of_samples for counter in counters):
 
-                except:
-                    pass
+                    line = out.readline()
+                    try:
+                        (channel, value) = parse_line(line)
+                        self.samples[channel, counters[channel]] = value
+                        counters[channel] += 1
+
+                    except:
+                        pass
             return self.samples
 
     def sample_for_time(self, duration):
